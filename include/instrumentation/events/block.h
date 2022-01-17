@@ -687,66 +687,6 @@ LTTNG_TRACEPOINT_EVENT_INSTANCE(block_rq, block_rq_issue,
 	TP_ARGS(rq)
 )
 
-/**
- * block_rq_issue2 - dispatch request to the device driver listing bio and
- *                   "offending" pid
- * @q: queue holding operation
- * @bio: new block operation
- * @ts: task struct that caused queueing
- *
- * About to place the block IO operation @bio into @q.
- * Since this is only for kernel 4.15.0, I will omit backwards compability!
- */
-LTTNG_TRACEPOINT_EVENT(block_rq_issue2,
-
-	TP_PROTO(struct request_queue *q, struct request *rq,
-             struct task_struct *ts),
-
-	TP_ARGS(q, rq, ts),
-
-	TP_FIELDS(
-		ctf_integer(dev_t, dev,
-			rq->rq_disk ? disk_devt(rq->rq_disk) : 0)
-		ctf_integer(sector_t, sector, blk_rq_trace_sector(rq))
-		ctf_integer(unsigned int, nr_sector, blk_rq_trace_nr_sectors(rq))
-		ctf_integer(unsigned int, bytes, blk_rq_bytes(rq))
-		ctf_integer(pid_t, tid, current->pid)
-		blk_rwbs_ctf_integer(unsigned int, rwbs,
-			lttng_req_op(rq), lttng_req_rw(rq), blk_rq_bytes(rq))
-        ctf_integer(pid_t, reqtid, ts->pid)
-		ctf_array_text(char, comm, current->comm, TASK_COMM_LEN)
-        ctf_integer_hex(unsigned long, bptr, (unsigned long) rq->bio)
-        ctf_integer(unsigned int, nr_hwq, q->nr_hw_queues)
-	)
-)
-
-/**
- * block_bio_queue2 - putting new block IO operation in queue and listing
- *                    current process id
- * @q: queue holding operation
- * @bio: new block operation
- * @ts: task struct that caused queueing
- *
- * About to place the block IO operation @bio into @q.
- * Since this is only for kernel 4.15.0, I will omit backwards compability!
- */
-LTTNG_TRACEPOINT_EVENT(block_bio_queue2,
-
-    TP_PROTO(struct request_queue *q, struct bio *bio, struct task_struct *ts),
-
-    TP_ARGS(q, bio, ts),
-
-    TP_FIELDS(
-        ctf_integer(dev_t, dev, bio_dev(bio))
-        ctf_integer(sector_t, sector, bio->bi_iter.bi_sector)
-        ctf_integer(unsigned int, nr_sector, bio_sectors(bio))
-        blk_rwbs_ctf_integer(unsigned int, rwbs,
-            lttng_bio_op(bio), lttng_bio_rw(bio), bio->bi_iter.bi_size)
-        ctf_integer(pid_t, reqtid, ts->pid)
-        ctf_array_text(char, comm, current->comm, TASK_COMM_LEN)
-        ctf_integer_hex(unsigned long, bptr, (unsigned long) bio)
-    )
-)
 
 #else
 /**
@@ -824,40 +764,6 @@ LTTNG_TRACEPOINT_EVENT(block_bio_complete,
 			bio->bi_iter.bi_size)
 	)
 )
-
-/**
- * block_bio_complete2 - completed all work on the block operation, also listing
- *                       pid of thread that signals the completion
- * @q: queue holding the block operation
- * @bio: block operation completed
- * @error: io error value
- * @ts: task struct of calling thread
- *
- * This tracepoint indicates there is no further work to do on this
- * block IO operation @bio.
- *
- * Compability to kernel versions other than 4.15 is omitted.
- */
-LTTNG_TRACEPOINT_EVENT(block_bio_complete2,
-        TP_PROTO(struct request_queue *q, struct bio *bio, int error,
-                 struct task_struct *ts),
-
-        TP_ARGS(q, bio, error, ts),
-
-        TP_FIELDS(
-                ctf_integer(dev_t, dev, bio_dev(bio))
-                ctf_integer(sector_t, sector, bio->bi_iter.bi_sector)
-                ctf_integer(unsigned int, nr_sector, bio_sectors(bio))
-                ctf_integer(int, error, error)
-                blk_rwbs_ctf_integer(unsigned int, rwbs,
-                        lttng_bio_op(bio), lttng_bio_rw(bio),
-                        bio->bi_iter.bi_size)
-                ctf_integer(pid_t, reqtid, ts->pid)
-                ctf_array_text(char, comm, ts->comm, TASK_COMM_LEN)
-                ctf_integer_hex(unsigned long, bptr, (unsigned long) bio)
-        )
-)
-
 #elif (LTTNG_LINUX_VERSION_CODE >= LTTNG_KERNEL_VERSION(4,14,0))
 /**
  * block_bio_complete - completed all work on the block operation
@@ -1649,6 +1555,102 @@ LTTNG_TRACEPOINT_EVENT(block_rq_remap,
 	)
 )
 #endif
+
+
+/**
+ * block_rq_issue2 - dispatch request to the device driver listing bio and
+ *                   "offending" pid
+ * @q: queue holding operation
+ * @bio: new block operation
+ * @ts: task struct that caused queueing
+ *
+ * About to place the block IO operation @bio into @q.
+ * Since this is only for kernel 4.15.0, I will omit backwards compability!
+ */
+LTTNG_TRACEPOINT_EVENT(block_rq_issue2,
+
+        TP_PROTO(struct request_queue *q, struct request *rq,
+                 struct task_struct *ts),
+
+        TP_ARGS(q, rq, ts),
+
+        TP_FIELDS(
+        ctf_integer(dev_t, dev,
+                    rq->rq_disk ? disk_devt(rq->rq_disk) : 0)
+ctf_integer(sector_t, sector, blk_rq_trace_sector(rq))
+ctf_integer(unsigned int, nr_sector, blk_rq_trace_nr_sectors(rq))
+ctf_integer(unsigned int, bytes, blk_rq_bytes(rq))
+ctf_integer(pid_t, tid, current->pid)
+blk_rwbs_ctf_integer(unsigned int, rwbs,
+                     lttng_req_op(rq), lttng_req_rw(rq), blk_rq_bytes(rq))
+ctf_integer(pid_t, reqtid, ts->pid)
+ctf_array_text(char, comm, current->comm, TASK_COMM_LEN)
+ctf_integer_hex(unsigned long, bptr, (unsigned long) rq->bio)
+ctf_integer(unsigned int, nr_hwq, q->nr_hw_queues)
+)
+)
+
+/**
+ * block_bio_queue2 - putting new block IO operation in queue and listing
+ *                    current process id
+ * @q: queue holding operation
+ * @bio: new block operation
+ * @ts: task struct that caused queueing
+ *
+ * About to place the block IO operation @bio into @q.
+ * Since this is only for kernel 4.15.0, I will omit backwards compability!
+ */
+LTTNG_TRACEPOINT_EVENT(block_bio_queue2,
+
+        TP_PROTO(struct request_queue *q, struct bio *bio, struct task_struct *ts),
+
+        TP_ARGS(q, bio, ts),
+
+        TP_FIELDS(
+        ctf_integer(dev_t, dev, bio_dev(bio))
+ctf_integer(sector_t, sector, bio->bi_iter.bi_sector)
+ctf_integer(unsigned int, nr_sector, bio_sectors(bio))
+blk_rwbs_ctf_integer(unsigned int, rwbs,
+                     lttng_bio_op(bio), lttng_bio_rw(bio), bio->bi_iter.bi_size)
+ctf_integer(pid_t, reqtid, ts->pid)
+ctf_array_text(char, comm, current->comm, TASK_COMM_LEN)
+ctf_integer_hex(unsigned long, bptr, (unsigned long) bio)
+)
+)
+
+/**
+ * block_bio_complete2 - completed all work on the block operation, also listing
+ *                       pid of thread that signals the completion
+ * @q: queue holding the block operation
+ * @bio: block operation completed
+ * @error: io error value
+ * @ts: task struct of calling thread
+ *
+ * This tracepoint indicates there is no further work to do on this
+ * block IO operation @bio.
+ *
+ * Compability to kernel versions other than 4.15 is omitted.
+ */
+LTTNG_TRACEPOINT_EVENT(block_bio_complete2,
+        TP_PROTO(struct request_queue *q, struct bio *bio, int error,
+                 struct task_struct *ts),
+
+        TP_ARGS(q, bio, error, ts),
+
+        TP_FIELDS(
+        ctf_integer(dev_t, dev, bio_dev(bio))
+ctf_integer(sector_t, sector, bio->bi_iter.bi_sector)
+ctf_integer(unsigned int, nr_sector, bio_sectors(bio))
+ctf_integer(int, error, error)
+blk_rwbs_ctf_integer(unsigned int, rwbs,
+                     lttng_bio_op(bio), lttng_bio_rw(bio),
+                     bio->bi_iter.bi_size)
+ctf_integer(pid_t, reqtid, ts->pid)
+ctf_array_text(char, comm, ts->comm, TASK_COMM_LEN)
+ctf_integer_hex(unsigned long, bptr, (unsigned long) bio)
+)
+)
+
 
 #undef __print_rwbs_flags
 #undef blk_fill_rwbs
