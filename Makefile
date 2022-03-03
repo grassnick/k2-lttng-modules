@@ -27,6 +27,8 @@ endif
 
 default: modules
 
+all: modules
+
 modules:
 	$(MAKE) -C $(KERNELDIR) M=$(PWD)/src \
 		CONFIG_LTTNG=m CONFIG_LTTNG_CLOCK_PLUGIN_TEST=m \
