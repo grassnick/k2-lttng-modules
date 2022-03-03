@@ -13,15 +13,16 @@ LTTNG_TRACEPOINT_EVENT(
         // Name - the name of the tracepoint to be created
         k2_completed_request,
         // Prototype - the prototype for the tracepoint callbacks
-        TP_PROTO(struct request* rq),
+        TP_PROTO(struct request* rq, u64 real_latency),
         // Arguments - the arguments that match the prototype
-        TP_ARGS(rq),
+        TP_ARGS(rq, real_latency),
 
         // Struct - the structure that a tracer could use (but is not required to) to store the data passed into the tracepoint
         TP_FIELDS(
                 //ctf_integer(u32, request_size, blk_rq_bytes(rq))
                 ctf_integer(u32, request_size, (uintptr_t)rq->elv.priv[1])
                 ctf_integer(u32, estimated_latency, (uintptr_t)rq->elv.priv[0])
+                ctf_integer(u64, real_latency, real_latency)
         )
 )
 
