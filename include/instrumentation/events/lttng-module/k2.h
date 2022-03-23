@@ -20,9 +20,10 @@ LTTNG_TRACEPOINT_EVENT(
         // Struct - the structure that a tracer could use (but is not required to) to store the data passed into the tracepoint
         TP_FIELDS(
                 //ctf_integer(u32, request_size, blk_rq_bytes(rq))
-                ctf_integer(u32, request_size, (uintptr_t)rq->elv.priv[1])
-                ctf_integer(u32, estimated_latency, (uintptr_t)rq->elv.priv[0])
+                ctf_integer(u32, request_size, (__u32)((__u64)rq->elv.priv[1] >> 32))
+                ctf_integer(u64, estimated_latency, (uintptr_t)rq->elv.priv[0])
                 ctf_integer(u64, real_latency, real_latency)
+                ctf_integer(s32, pid, (__s32)rq->elv.priv[1])
         )
 )
 
